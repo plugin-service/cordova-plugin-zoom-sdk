@@ -1,7 +1,7 @@
 
 
 <?xml version="1.0" encoding="utf-8"?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="com.facetec.cordova.ZoomAuthentication" version="5.1.7">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="com.facetec.cordova.ZoomAuthentication" version="6.0.3">
   
   <name>ZoomAuthentication</name>
   <js-module name="ZoomAuthentication" src="www/ZoomAuthentication.js">
@@ -34,12 +34,12 @@
     
     <config-file parent="/*" target="AndroidManifest.xml"/>
     
-    <resource-file src="aar/zoom-authentication.aar" target="libs/zoom-authentication.aar" />
+    <resource-file src="aar/zoom-authentication.aar" target="../../libs/zoom-authentication.aar" />
     <source-file src="src/android/ZoomAuthentication.java" target-dir="src/com/facetec/cordova/ZoomAuthentication"/>
     <framework src="src/android/ZoomAuthentication.gradle" custom="true" type="gradleReference" />
   </platform>
 
   <!-- Tell iOS applications to embed the required Swift libraries  -->
-  <dependency id="cordova-plugin-add-swift-support" version="1.6.2"/>
+  <dependency id="cordova-plugin-add-swift-support" version="1.7.1"/>
 </plugin>
 

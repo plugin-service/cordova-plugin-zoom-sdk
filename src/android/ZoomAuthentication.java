@@ -238,8 +238,6 @@ public class ZoomAuthentication extends CordovaPlugin {
                 return "InternalError";
             case FAILED_DUE_TO_OS_CONTEXT_SWITCH:
                 return "OSContextSwitch";
-            case WIFI_NOT_ON_IN_DEV_MODE:
-                return "WifiNotOnInDevMode";
             case NETWORKING_MISSING_IN_DEV_MODE:
                 return "NoConnectionInDevMode";
             case CAMERA_PERMISSION_DENIED:
@@ -263,8 +261,6 @@ public class ZoomAuthentication extends CordovaPlugin {
                 return "Timeout";
             case USER_FAILED_AUTHENTICATION:
                 return "FailedAuthentication";
-            case WIFI_NOT_ON_IN_DEV_MODE:
-                return "WifiNotOnInDevMode";
             case NETWORKING_MISSING_IN_DEV_MODE:
                 return "NoConnectionInDevMode";
             case CAMERA_PERMISSIONS_DENIED:
