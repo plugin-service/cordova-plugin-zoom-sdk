@@ -12,6 +12,10 @@ exports.authenticate = function(userId, encryptionSecret, success, error) {
   exec(success, error, "ZoomAuthentication", "authenticate", [userId, encryptionSecret]);
 }
 
+exports.verify = function(success, error) {
+  exec(success, error, "ZoomAuthentication", "verify", []);
+}
+
 exports.getVersion = function(success, error) {
   exec(success, error, "ZoomAuthentication", "getVersion", []);
 };

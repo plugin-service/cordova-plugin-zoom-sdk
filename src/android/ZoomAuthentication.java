@@ -14,7 +14,11 @@ import com.facetec.zoom.sdk.ZoomEnrollmentResult;
 import com.facetec.zoom.sdk.ZoomEnrollmentStatus;
 import com.facetec.zoom.sdk.ZoomLivenessResult;
 import com.facetec.zoom.sdk.ZoomSDK;
+import com.facetec.zoom.sdk.ZoomSDK.ZoomSDKStatus;
 import com.facetec.zoom.sdk.ZoomStrategy;
+import com.facetec.zoom.sdk.ZoomVerificationActivity;
+import com.facetec.zoom.sdk.ZoomVerificationResult;
+import com.facetec.zoom.sdk.ZoomVerificationStatus;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -53,6 +57,9 @@ public class ZoomAuthentication extends CordovaPlugin {
         }
         else if (action.equals("authenticate")) {
             authenticate(args, callbackContext);
+        }
+        else if (action.equals("verify")) {
+            verify(args, callbackContext);
         }
         else {
             return false;
@@ -111,6 +118,15 @@ public class ZoomAuthentication extends CordovaPlugin {
         this.cordova.startActivityForResult(this, authenticationIntent, ZoomSDK.REQUEST_CODE_AUTHENTICATION);
     }
 
+    private void verify(JSONArray args, final CallbackContext callbackContext) throws JSONException {
+
+        Intent verificationIntent = new Intent(this.cordova.getActivity(), ZoomVerificationActivity.class);
+
+        pendingCallbackContext = callbackContext;
+
+        this.cordova.startActivityForResult(this, verificationIntent, ZoomSDK.REQUEST_CODE_VERIFICATION);
+    }
+
     private void getUserEnrollmentStatus(JSONArray args, final CallbackContext callbackContext) throws JSONException {
         final Context context = this.cordova.getActivity().getApplicationContext();
         final String userId = args.getString(0);
@@ -136,7 +152,7 @@ public class ZoomAuthentication extends CordovaPlugin {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-         if (resultCode == Activity.RESULT_OK) {
+        if (resultCode == Activity.RESULT_OK) {
             try {
                 //
                 // result from enrollment
@@ -154,7 +170,17 @@ public class ZoomAuthentication extends CordovaPlugin {
                 else if (requestCode == ZoomSDK.REQUEST_CODE_AUTHENTICATION) {
                     ZoomAuthenticationResult result = data.getParcelableExtra(ZoomSDK.EXTRA_AUTH_RESULTS);
                     JSONObject resultObj = convertZoomAuthenticationResult(result);
-                    
+
+                    pendingCallbackContext.success(resultObj);
+                    pendingCallbackContext = null;
+                }
+                //
+                // result from verification
+                //
+                else if (requestCode == ZoomSDK.REQUEST_CODE_VERIFICATION) {
+                    ZoomVerificationResult result = data.getParcelableExtra(ZoomSDK.EXTRA_VERIFY_RESULTS);
+                    JSONObject resultObj = convertZoomVerificationResult(result);
+
                     pendingCallbackContext.success(resultObj);
                     pendingCallbackContext = null;
                 }
@@ -174,8 +200,8 @@ public class ZoomAuthentication extends CordovaPlugin {
 
     @NonNull
     private String getSdkStatusString() {
-         Context context = this.cordova.getActivity().getApplicationContext();
-         ZoomSDK.ZoomSDKStatus status = ZoomSDK.getStatus(context);
+        Context context = this.cordova.getActivity().getApplicationContext();
+        ZoomSDKStatus status = ZoomSDK.getStatus(context);
 
         switch (status) {
             case NEVER_INITIALIZED:
@@ -189,9 +215,12 @@ public class ZoomAuthentication extends CordovaPlugin {
             case DEVICE_INSECURE:
                 return "DeviceInsecure";
             case NETWORK_ISSUES:
-            default:
                 return "NetworkIssues";
+            case OFFLINE_SESSIONS_EXCEEDED:
+                return "OfflineSessionsExceeded";
         }
+
+        return "UnknownStatus";
     }
 
     private static JSONObject convertZoomEnrollmentResult(ZoomEnrollmentResult result) throws JSONException {
@@ -220,6 +249,16 @@ public class ZoomAuthentication extends CordovaPlugin {
         return resultObj;
     }
 
+    private static JSONObject convertZoomVerificationResult(ZoomVerificationResult result) throws JSONException {
+        JSONObject resultObj = new JSONObject();
+
+        ZoomVerificationStatus status = result.getStatus();
+        resultObj.put("successful", (status == ZoomVerificationStatus.USER_PROCESSED_SUCCESSFULLY));
+        resultObj.put("status", convertZoomVerificationStatus(status));
+
+        return resultObj;
+    }
+
     private static String convertZoomEnrollmentStatus(ZoomEnrollmentStatus status) {
         // Note: These string values should match exactly with the iOS implementation
         switch (status) {
@@ -244,9 +283,10 @@ public class ZoomAuthentication extends CordovaPlugin {
                 return "CameraPermissionDenied";
             case USER_NOT_ENROLLED:
             case FAILED_BECAUSE_USER_COULD_NOT_VALIDATE_FINGERPRINT:
-            default:
                 return "NotEnrolled";
         }
+
+        return "UnknownStatus";
     }
 
     private static String convertZoomAuthenticationStatus(ZoomAuthenticationStatus status) {
@@ -276,9 +316,31 @@ public class ZoomAuthentication extends CordovaPlugin {
             case FAILED_DUE_TO_INTERNAL_ERROR:
                 return "InternalError";
             case USER_CANCELLED:
-            default:
                 return "UserCancelled";
         }
+
+        return "UnknownStatus";
+    }
+
+    private static String convertZoomVerificationStatus(ZoomVerificationStatus status) {
+        switch (status) {
+            case USER_PROCESSED_SUCCESSFULLY:
+                return "ProcessedSuccessfully";
+            case USER_NOT_PROCESSED:
+                return "NotProcessed";
+            case APP_TOKEN_NOT_VALID:
+                return "AppTokenNotValid";
+            case NETWORKING_MISSING_IN_DEV_MODE:
+                return "NoConnectionInDevMode";
+            case FAILED_DUE_TO_CAMERA_ERROR:
+                return "CameraError";
+            case FAILED_DUE_TO_INTERNAL_ERROR:
+                return "InternalError";
+            case USER_CANCELLED:
+                return "UserCancelled";
+        }
+
+        return "UnknownStatus";
     }
 
     private static String convertZoomAuthenticatorState(ZoomAuthenticatorState state) {

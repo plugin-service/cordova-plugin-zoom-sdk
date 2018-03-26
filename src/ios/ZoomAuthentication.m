@@ -3,7 +3,7 @@
 #import <Cordova/CDV.h>
 @import ZoomAuthentication;
 
-@interface ZoomAuthentication : CDVPlugin <ZoomEnrollmentDelegate, ZoomAuthenticationDelegate> {
+@interface ZoomAuthentication : CDVPlugin <ZoomEnrollmentDelegate, ZoomAuthenticationDelegate, ZoomVerificationDelegate> {
     CDVInvokedUrlCommand* pendingCommand;
 }
 
@@ -16,6 +16,8 @@
 - (void)enroll:(CDVInvokedUrlCommand*)command;
 
 - (void)authenticate:(CDVInvokedUrlCommand*)command;
+
+- (void)verify:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -48,12 +50,10 @@
     NSString* userId = [command.arguments objectAtIndex:0];
     NSString* encryptionSecret = [command.arguments objectAtIndex:1];
     
-    ZoomEnrollmentViewController *vc = [[Zoom sdk] createEnrollmentVC];
-    [vc prepareForEnrollmentWithDelegate:self userID:userId applicationPerUserEncryptionSecret:encryptionSecret secret:nil];
+    UIViewController *vc = [[Zoom sdk] createEnrollmentVCWithDelegate:self userID:userId applicationPerUserEncryptionSecret:encryptionSecret secret:nil];
     
     pendingCommand = command;
     [self.viewController presentViewController:vc animated:true completion:nil];
-    
 }
 
 - (void)authenticate:(CDVInvokedUrlCommand*)command
@@ -61,9 +61,16 @@
     NSString* userId = [command.arguments objectAtIndex:0];
     NSString* encryptionSecret = [command.arguments objectAtIndex:1];
 
-    ZoomAuthenticationViewController *vc = [[Zoom sdk] createAuthenticationVC];
-    [vc prepareForAuthenticationWithDelegate:self userID:userId applicationPerUserEncryptionSecret:encryptionSecret ];
+    UIViewController *vc = [[Zoom sdk] createAuthenticationVCWithDelegate:self userID:userId applicationPerUserEncryptionSecret:encryptionSecret ];
 
+    pendingCommand = command;
+    [self.viewController presentViewController:vc animated:true completion:nil];
+}
+
+- (void)verify:(CDVInvokedUrlCommand*)command
+{
+    UIViewController *vc = [[Zoom sdk] createVerificationVCWithDelegate:self verificationImages:NULL retrieveZoomBiometric:false ];
+    
     pendingCommand = command;
     [self.viewController presentViewController:vc animated:true completion:nil];
 }
@@ -139,6 +146,19 @@
     pendingCommand = nil;
 }
 
+- (void) onZoomVerificationResultWithResult:(ZoomVerificationResult *)result {
+    ZoomVerificationStatus status = [result status];
+    NSDictionary* resultDict = @{
+        @"successful": (status == ZoomVerificationStatusUserProcessedSuccessfully ? @YES : @NO),
+        @"status": [self convertZoomVerificationStatus:status],
+        @"livenessResult": [self convertZoomLivenessResult:[[result faceMetrics] livenessResult]],
+    };
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:pendingCommand.callbackId];
+    pendingCommand = nil;
+}
+
 - (NSString*)convertZoomEnrollmentStatus:(ZoomEnrollmentStatus)status {
     // Note: These string values should match exactly with the Android implementation
     switch (status) {
@@ -204,8 +224,44 @@
             return @"FailedAuthentication";
         case ZoomAuthenticationStatusFailedToAuthenticateTooManyTimesAndUserWasDeleted:
             return @"FailedAndWasDeleted";
+        case ZoomAuthenticationStatusFailedBecauseOfflineSessionsExceeded:
+            return @"OfflineSessionsExceeded";
+        case ZoomAuthenticationStatusFailedBecauseEncryptionKeyInvalid:
+            return @"EncryptionKeyInvalid";
     }
     return (NSString*)nil;
+}
+
+- (NSString*)convertZoomVerificationStatus:(ZoomVerificationStatus)status {
+    switch (status) {
+        case ZoomVerificationStatusUserProcessedSuccessfully:
+            return @"ProcessedSuccessfully";
+        case ZoomVerificationStatusUserNotProcessed:
+            return @"UserNotProcessed";
+        case ZoomVerificationStatusFailedBecauseUserCancelled:
+            return @"UserCancelled";
+        case ZoomVerificationStatusFailedBecauseAppTokenNotValid:
+            return @"AppTokenNotValid";
+        case ZoomVerificationStatusFailedBecauseCameraPermissionDeniedByUser:
+        case ZoomVerificationStatusFailedBecauseCameraPermissionDeniedByAdministrator:
+             return @"CameraPermissionsDenied";
+        case ZoomVerificationStatusFailedBecauseOfOSContextSwitch:
+            return @"OSContextSwitch";
+        case ZoomVerificationStatusFailedBecauseOfTimeout:
+            return @"Timeout";
+        case ZoomVerificationStatusFailedBecauseOfLowMemory:
+            return @"LowMemory";
+        case ZoomVerificationStatusFailedBecauseOfDiskWriteError:
+            return @"DiskWriteError";
+        case ZoomVerificationStatusFailedBecauseWifiNotOnInDevMode:
+            return @"WifiNotOnInDevMode";
+        case ZoomVerificationStatusFailedBecauseNoConnectionInDevMode:
+            return @"NoConnectionInDevMode";
+        case ZoomVerificationStatusFailedBecauseOfflineSessionsExceeded:
+            return @"OfflineSessionsExceeded";
+        case ZoomVerificationStatusFailedBecauseEncryptionKeyInvalid:
+            return @"EncryptionKeyInvalid";
+    }
 }
 
 - (NSString*)getSdkStatusString {
@@ -222,6 +278,9 @@
             return @"DeviceInsecure";
         case ZoomSDKStatusVersionDeprecated:
             return @"VersionDeprecated";
+        case ZoomSDKStatusOfflineSessionsExceeded:
+            return @"OfflineSessionsExceeded";
+            break;
     }
     return nil;
 }
