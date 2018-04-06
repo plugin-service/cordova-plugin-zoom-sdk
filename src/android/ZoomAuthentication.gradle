@@ -1,13 +1,16 @@
 repositories{    
   jcenter()
   flatDir {
-      dirs 'libs'
-   }
+    dirs 'libs'
+  }
+  maven {
+    url 'http://maven.facetec.com'
+  }
 }
 
 dependencies {
   compile 'com.android.support:appcompat-v7:25.3.1'
-  compile(name:'zoom-authentication', ext:'aar')
+  implementation 'com.facetec:zoom-authentication:6.1.8'
 }
 
 android {
