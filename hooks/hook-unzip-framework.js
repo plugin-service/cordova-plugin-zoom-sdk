@@ -4,7 +4,7 @@
 //	improved, we can remove this and rely on that.
 module.exports = function(ctx) {
 
-	var unzipper = require('unzipper');
+	var extractZip = require('extract-zip');
 	var fs = ctx.requireCordovaModule('fs'),
         path = ctx.requireCordovaModule('path'),
         Q = ctx.requireCordovaModule('q');
@@ -13,13 +13,10 @@ module.exports = function(ctx) {
 
     var pluginRoot = path.join(ctx.opts.projectRoot, '/plugins/com.facetec.cordova.ZoomAuthentication');
     var zipPath = path.join(pluginRoot, 'ZoomAuthentication.framework.zip');
-    
-    var extracter = unzipper.Extract({ path: pluginRoot });
-    extracter.on('finish', () => {
-    	deferral.resolve();
-    })
 
-    fs.createReadStream(zipPath).pipe(extracter);
+		extractZip(zipPath, {dir: pluginRoot}, function(err) {
+			deferral.resolve();
+		});
 
    	return deferral.promise;
 }
