@@ -31,7 +31,7 @@
     
     [self.commandDelegate runInBackground:^{
         
-        [[Zoom sdk] initializeWithAppToken:appToken enrollmentStrategy:ZoomStrategyZoomOnly completion: ^ void (BOOL validationResult) {
+        [[Zoom sdk] initializeWithAppToken:appToken completion: ^ void (BOOL validationResult) {
             CDVPluginResult* pluginResult;
             if (validationResult) {
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -178,10 +178,6 @@
             return @"OSContextSwitch";
         case ZoomEnrollmentStatusFailedBecauseOfDiskWriteError:
             return @"DiskWriteError";
-        case ZoomEnrollmentStatusFailedBecauseWifiNotOnInDevMode:
-            return @"WifiNotOnInDevMode";
-        case ZoomEnrollmentStatusFailedBecauseFingerprintDisabled:
-            return @"FingerprintDisabled";
         case ZoomEnrollmentStatusFailedBecauseNoConnectionInDevMode:
             return @"NoConnectionInDevMode";
         case ZoomEnrollmentStatusFailedBecauseCameraPermissionDeniedByUser:
@@ -212,8 +208,6 @@
             return @"OSContextSwitch";
         case ZoomAuthenticationStatusFailedBecauseTouchIDUnavailable:
             return @"TouchIDUnavailable";
-        case ZoomAuthenticationStatusFailedBecauseWifiNotOnInDevMode:
-            return @"WifiNotOnInDevMode";
         case ZoomAuthenticationStatusFailedBecauseNoConnectionInDevMode:
             return @"NoConnectionInDevMode";
         case ZoomAuthenticationStatusFailedBecauseCameraPermissionDenied:
@@ -228,6 +222,10 @@
             return @"OfflineSessionsExceeded";
         case ZoomAuthenticationStatusFailedBecauseEncryptionKeyInvalid:
             return @"EncryptionKeyInvalid";
+        case ZoomAuthenticationStatusFailedBecauseCouldNotRetrieveBiometricDataForUser:
+            return @"CouldNotRetrieveBiometricDataForUser";
+        case ZoomAuthenticationStatusFailedBecauseEncryptionSecretInvalid:
+            return @"EncryptionSecretInvalid";
     }
     return (NSString*)nil;
 }
@@ -253,8 +251,6 @@
             return @"LowMemory";
         case ZoomVerificationStatusFailedBecauseOfDiskWriteError:
             return @"DiskWriteError";
-        case ZoomVerificationStatusFailedBecauseWifiNotOnInDevMode:
-            return @"WifiNotOnInDevMode";
         case ZoomVerificationStatusFailedBecauseNoConnectionInDevMode:
             return @"NoConnectionInDevMode";
         case ZoomVerificationStatusFailedBecauseOfflineSessionsExceeded:

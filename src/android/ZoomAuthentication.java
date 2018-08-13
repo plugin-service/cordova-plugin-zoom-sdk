@@ -15,7 +15,6 @@ import com.facetec.zoom.sdk.ZoomEnrollmentStatus;
 import com.facetec.zoom.sdk.ZoomLivenessResult;
 import com.facetec.zoom.sdk.ZoomSDK;
 import com.facetec.zoom.sdk.ZoomSDK.ZoomSDKStatus;
-import com.facetec.zoom.sdk.ZoomStrategy;
 import com.facetec.zoom.sdk.ZoomVerificationActivity;
 import com.facetec.zoom.sdk.ZoomVerificationResult;
 import com.facetec.zoom.sdk.ZoomVerificationStatus;
@@ -76,7 +75,7 @@ public class ZoomAuthentication extends CordovaPlugin {
             @Override
             public void run() {
                 ZoomSDK.preload(context);
-                ZoomSDK.initialize(context, appToken, ZoomStrategy.ZOOM_ONLY, new ZoomSDK.InitializeCallback() {
+                ZoomSDK.initialize(context, appToken, new ZoomSDK.InitializeCallback() {
                     @Override
                     public void onCompletion(boolean successful) {
                         if (successful) {
