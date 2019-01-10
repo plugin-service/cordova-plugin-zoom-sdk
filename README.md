@@ -1,3 +1,15 @@
+**Limited Support Notice**
+--------------------------
+This plugin, bindings, and sample code are meant for example purposes only.  This example will no longer run out of the box from this Github project.  This project is intended to be reference code for how you can integrate ZoOm as a native plugin in the Cordova/Ionic/PhoneGap ecosystem.  This example was based on an earlier version of ZoOm (6.5.0), which we no longer support and will not function if you attempt to use it.
+
+If you are familiar with Cordova/Ionic/PhoneGap and Native Modules in these ecosystems, this plugin and the sample provided is 90% of the work to get ZoOm working in your Cordova/Ionic/PhoneGap app.  The remaining work is in updating the bindings to our latest released Native iOS and Android libraries (7.0.0)+, which can be downloaded here - https://dev.zoomlogin.com/zoomsdk/#/downloads.
+
+Hopefully this is enough to get you going!
+
+If you have any more technical questions please feel free to contact us at support@zoomlogin.com
+------------------------------
+**End Limited Support Notice**
+
 ZoOm SDK Cordova Plugin
 -----------------------
 This plugin provides easy access to the ZoOm login SDK from a Cordova app using the Android or iOS platform.  Sample code available [here](https://github.com/facetec/cordova-example-zoom-sdk).
