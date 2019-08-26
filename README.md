@@ -1,26 +1,20 @@
-**Limited Support Notice**
---------------------------
-This plugin, bindings, and sample code are meant for example purposes only.  This example will no longer run out of the box from this Github project.  This project is intended to be reference code for how you can integrate ZoOm as a native plugin in the Cordova/Ionic/PhoneGap ecosystem.  This example is based on an earlier version of ZoOm (6.5.0) from mid-2018 that is no longer support and the APIs have changed (please see https://dev.zoomlogin.com/zoomsdk/#/ for latest version information).
+**Note from Developer***
 
-If you are familiar with Cordova/Ionic/PhoneGap and Native Modules in these ecosystems, this plugin and the sample provided is 90% of the work to get ZoOm working in your Cordova/Ionic/PhoneGap app.  The remaining work is in updating the bindings to our latest released Native iOS and Android libraries (7.0.0)+, which can be downloaded here - https://dev.zoomlogin.com/zoomsdk/#/downloads.
+Source code files are being uploaded currently. If you need any further information, please contact plugins@snapcommute.com
 
-Hopefully this is enough to get you going!
 
-If you have any more technical questions please feel free to contact us at support@zoomlogin.com
-------------------------------
-**End Limited Support Notice**
+*******
+
 
 ZoOm SDK Cordova Plugin
 -----------------------
-This plugin provides easy access to the ZoOm login SDK from a Cordova app using the Android or iOS platform.  Sample code available [here](https://github.com/facetec/cordova-example-zoom-sdk).
+This plugin provides easy access to the Zoom login SDK from a Cordova app using the Android or iOS platform. The plugin provided by FaceTec, vendors of Zoom login SDK, was updated till the SDK version 6.0.5. The vendor stopped updating the plugin for newer SDK versions. The plugin provided by the vendor does not work with the latest SDK versions and hence required updates. This is an evaluation version for the latest Zoom login SDK created by SnapCommute Labs Pvt. Ltd. This version only contains local liveness check and few customizations. For full version of the plugin please send an email request to plugins@snapcommute.com. The full version has server side integration for enrollment and authentication as well as full customization options available through Zoom SDK.
 
 Installation
 ---------------
-From an existing Cordova project, run `cordova plugin add https://github.com/facetec/cordova-plugin-zoom-sdk`
+From an existing Cordova project, run `cordova plugin add https://github.com/plugin-service/cordova-plugin-zoom-sdk`
 
 If you don't have a Cordova project or don't know how to run one, please see the [Cordova](https://cordova.apache.org/#getstarted) documentation.
-
-For Android, make sure that the manifest file at "platforms/android/AndroidManifest.xml" has a *minSdkVersion* of at least 18
 
 Initializing the SDK
 --------------------
@@ -34,7 +28,6 @@ Enrolling a User
 ----------------
 ```javascript
     var userId = "A unique user id";
-    var encryptionSecret = "Some secret string";
 
     function onEnrollComplete(result) {
         if (result.successful) {
@@ -45,16 +38,14 @@ Enrolling a User
         }
     }
 
-    ZoomAuthentication.enroll(userId, encryptionSecret, onEnrollComplete, onError);
+    ZoomAuthentication.enroll(userId, onEnrollComplete, onError);
 ```
 
-The encryption secret can be any string the developer desires.  It will be used as part of the encryption of the user's data and the exact string must always be provided during authentication.
 
 Authenticating a User
 ---------------------
 ```javascript
     var userId = "A previously enrolled user id";
-    var encryptionSecret = "Some secret string";
 
     function onAuthComplete(result) {
         if (result.successful) {
@@ -65,5 +56,125 @@ Authenticating a User
         }
     }
 
-    ZoomAuthentication.authenticate(userId, encryptionSecret, onAuthComplete, onError);
+    ZoomAuthentication.authenticate(userId, onAuthComplete, onError);
+```
+
+Liveness Check
+---------------------
+```javascript
+    function onCheckComplete(result) {
+        if (result.successful) {
+            alert('Success!');
+        }
+        else {
+            alert(result.status);
+        }
+    }
+
+    ZoomAuthentication.verify(onCheckComplete, onError);
+```
+
+SDK Version Check
+---------------------
+```javascript
+
+    ZoomAuthentication.getVerision(onSuccess, onFailure);
+
+```
+
+SDK Status Check
+---------------------
+```javascript
+
+    ZoomAuthentication.getSdkStatus(onSuccess, onFailure);
+
+```
+
+Enrollment Status Check
+---------------------
+```javascript
+    var userId = "A user id";
+  
+    function onAuthComplete(result) {
+        if (result.successful) {
+            alert('Success!');
+        }
+        else {
+            alert(result.status);
+        }
+    }
+
+    ZoomAuthentication.getEnrollmentStatus(userId,onAuthComplete, onError);
+
+```
+
+User Id Check
+---------------------
+```javascript
+   var userId = "A user id";
+  
+    function onAuthComplete(result) {
+        if (result.successful) {
+            alert('Success!');
+        }
+        else {
+            alert(result.status);
+        }
+    }
+
+    ZoomAuthentication.isUserEnrolled(userId,onAuthComplete, onError);
+```
+
+Setting up your plubic key
+-------------------------------
+If you are moving to a production release, Zoom SDK requires you to upload a public SSH key to their server and also use them while initializing the SDK. So, for production app, below function should be called before calling initialize function.
+
+```javascript
+
+    ZoomAuthentication.setPublicKey(publicKey, onSuccess, onFailure);
+
+```
+
+Setting up server url
+-------------------------
+In case you are using your own zoom server instance, instead of using the FaceTec Managed Rest API server, you can change it using the below function.
+
+```javascript
+
+    ZoomAuthentication.setServerUrl(serverUrl, onSuccess, onFailure);
+
+```
+
+Customizing brand logo
+-------------------------
+In case you want to change the default logo provided in the screens shown by zoom, you can use the below function to do the same.
+
+```javascript
+
+    ZoomAuthentication.setBrandingLogo(brandingLogo, onSuccess, onFailure);
+
+```
+
+Customizing colors
+-------------------------
+In case you want to change the colors in the screens shown by zoom, you can use the below function to do the same.
+
+```javascript
+
+    ZoomAuthentication.setMainForeGroundColors(foreGroundColors, onSuccess, onFailure);
+    
+    ZoomAuthentication.setMainBackGroundColors(backGroundColors, onSuccess, onFailure);
+
+```
+
+Customizing main screen text
+-------------------------------
+In case you want to change the default text provided in the main screen shown by zoom, you can update the below line in plugin.xml.
+
+```javascript
+
+    <config-file target="res/values/strings.xml" parent="/*">
+        <string name="zoom_camera_permission_message_enroll">To get started with ZoOm,\nenable access to your selfie camera.        </string>
+    </config-file> 
+
 ```
