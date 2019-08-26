@@ -1,0 +1,19 @@
+{
+  "name": "ZoomAuthEval",
+  "version": "0.0.1",
+  "description": "Evaluation plugin for Zoom Authentication SDK",
+  "cordova": {
+    "id": "cordova-plugin-sc-zoomautheval",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "author": "SnapCommute Labs Pvt. Ltd.",
+  "license": "ISC"
+}
