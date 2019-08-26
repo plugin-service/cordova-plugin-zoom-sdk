@@ -21,7 +21,7 @@ Initializing the SDK
 You must first initialize the SDK with your app token before you can enroll or login using the SDK. If you do not have an app token, register for [developer access](https://dev.zoomlogin.com/).
 
 ```javascript
-    ZoomAuthentication.initialize(appToken, onSuccess, onFailure);
+    ZoomAuthEval.initialize(appToken, onSuccess, onFailure);
 ```
 
 Enrolling a User
@@ -38,7 +38,7 @@ Enrolling a User
         }
     }
 
-    ZoomAuthentication.enroll(userId, onEnrollComplete, onError);
+    ZoomAuthEval.enroll(userId, onEnrollComplete, onError);
 ```
 
 
@@ -56,7 +56,7 @@ Authenticating a User
         }
     }
 
-    ZoomAuthentication.authenticate(userId, onAuthComplete, onError);
+    ZoomAuthEval.authenticate(userId, onAuthComplete, onError);
 ```
 
 Liveness Check
@@ -71,14 +71,14 @@ Liveness Check
         }
     }
 
-    ZoomAuthentication.verify(onCheckComplete, onError);
+    ZoomAuthEval.verify(onCheckComplete, onError);
 ```
 
 SDK Version Check
 ---------------------
 ```javascript
 
-    ZoomAuthentication.getVerision(onSuccess, onFailure);
+    ZoomAuthEval.getVerision(onSuccess, onFailure);
 
 ```
 
@@ -86,7 +86,7 @@ SDK Status Check
 ---------------------
 ```javascript
 
-    ZoomAuthentication.getSdkStatus(onSuccess, onFailure);
+    ZoomAuthEval.getSdkStatus(onSuccess, onFailure);
 
 ```
 
@@ -104,7 +104,7 @@ Enrollment Status Check
         }
     }
 
-    ZoomAuthentication.getEnrollmentStatus(userId,onAuthComplete, onError);
+    ZoomAuthEval.getEnrollmentStatus(userId,onAuthComplete, onError);
 
 ```
 
@@ -122,7 +122,7 @@ User Id Check
         }
     }
 
-    ZoomAuthentication.isUserEnrolled(userId,onAuthComplete, onError);
+    ZoomAuthEval.isUserEnrolled(userId,onAuthComplete, onError);
 ```
 
 Setting up your plubic key
@@ -131,7 +131,7 @@ If you are moving to a production release, Zoom SDK requires you to upload a pub
 
 ```javascript
 
-    ZoomAuthentication.setPublicKey(publicKey, onSuccess, onFailure);
+    ZoomAuthEval.setPublicKey(publicKey, onSuccess, onFailure);
 
 ```
 
@@ -141,7 +141,7 @@ In case you are using your own zoom server instance, instead of using the FaceTe
 
 ```javascript
 
-    ZoomAuthentication.setServerUrl(serverUrl, onSuccess, onFailure);
+    ZoomAuthEval.setServerUrl(serverUrl, onSuccess, onFailure);
 
 ```
 
@@ -151,7 +151,7 @@ In case you want to change the default logo provided in the screens shown by zoo
 
 ```javascript
 
-    ZoomAuthentication.setBrandingLogo(brandingLogo, onSuccess, onFailure);
+    ZoomAuthEval.setBrandingLogo(brandingLogo, onSuccess, onFailure);
 
 ```
 
@@ -161,9 +161,9 @@ In case you want to change the colors in the screens shown by zoom, you can use 
 
 ```javascript
 
-    ZoomAuthentication.setMainForeGroundColors(foreGroundColors, onSuccess, onFailure);
+    ZoomAuthEval.setMainForeGroundColors(foreGroundColors, onSuccess, onFailure);
     
-    ZoomAuthentication.setMainBackGroundColors(backGroundColors, onSuccess, onFailure);
+    ZoomAuthEval.setMainBackGroundColors(backGroundColors, onSuccess, onFailure);
 
 ```
 
