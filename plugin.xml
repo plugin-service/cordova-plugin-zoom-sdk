@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-sc-zoomautheval" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>ZoomAuthEval</name>
+    <js-module name="ZoomAuthEval" src="www/ZoomAuthEval.js">
+        <clobbers target="cordova.plugins.ZoomAuthEval" />
+    </js-module>
+    <!-- Tell iOS applications to embed the required Swift libraries  -->
+    <dependency id="cordova-plugin-add-swift-support" version="1.7.1"/>
+    
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="ZoomAuthEval">
+                <param name="android-package" value="cordova-plugin-sc-zoomautheval.ZoomAuthEval" />
+            </feature>
+        </config-file>
+        <config-file target="res/values/strings.xml" parent="/*">
+            <string name="zoom_camera_permission_message_enroll">To get started with ZoOm,\nenable access to your selfie camera.</string>
+        </config-file>
+        <config-file parent="/*" target="AndroidManifest.xml" />
+        <source-file src="src/android/ZoomAuthEval.java" target-dir="src/cordova-plugin-sc-zoomautheval/ZoomAuthEval" />
+        <framework src="src/android/ZoomAuthentication.gradle" custom="true" type="gradleReference" />
+    </platform>
+    <platform name="ios">
+        <config-file parent="/*" target="config.xml">
+            <feature name="ZoomAuthEval">
+                <param name="ios-package" value="ZoomAuthEval" />
+            </feature>
+        </config-file>
+        <preference name="CAMERA_USAGE_DESCRIPTION" default="Secure Authentication with ZoOm" />
+        <config-file target="*-Info.plist" parent="NSCameraUsageDescription">
+            <string>$CAMERA_USAGE_DESCRIPTION</string>
+        </config-file>
+        <source-file src="src/ios/ZoomAuthEval.m" />
+        <framework src="ZoomAuthenticationHybrid.framework" custom="true" embed="true" />
+    </platform>
+</plugin>
