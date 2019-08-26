@@ -16,7 +16,9 @@ From an existing Cordova project, run `cordova plugin add https://github.com/plu
 
 If you don't have a Cordova project or don't know how to run one, please see the [Cordova](https://cordova.apache.org/#getstarted) documentation.
 
-Since the Zoom SDK files are large, it is not included in the github. Please visit [ZoomLogin Developer Website](https://dev.zoomlogin.com) and download the sdk files copy them to the root folder of this plugin.
+Since the Zoom SDK files are large, it is not included in the github. Please visit [ZoomLogin Developer Website](https://dev.zoomlogin.com) and download the sdk files and copy the relevant file to the root folder of this plugin.
+
+For Android, there will be a .rar file inside the downloaded zip file (like zoom-authentication-hybrid-<version #>.rar), which has to be copied to the root folder. For iOS, there will be a folder named ZoomAuthenticationHybrid.framework inside ZoomAuthentication-ios-<version #> folder, within the zip file, which has to be copied to the root folder.
 
 Initializing the SDK
 --------------------
