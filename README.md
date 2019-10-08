@@ -1,14 +1,7 @@
-**Note from Developer***
-
-Source code files are being uploaded currently. If you need any further information, please contact plugins@snapcommute.com
-
-
-*******
-
 
 ZoOm SDK Cordova Plugin
 -----------------------
-This plugin provides easy access to the Zoom login SDK from a Cordova app using the Android or iOS platform. The plugin provided by FaceTec, vendors of Zoom login SDK, was updated till the SDK version 6.0.5. The vendor stopped updating the plugin for newer SDK versions. The plugin provided by the vendor does not work with the latest SDK versions and hence required updates. This is an evaluation version for the latest Zoom login SDK created by SnapCommute Labs Pvt. Ltd. This version only contains local liveness check and few customizations. For full version of the plugin please send an email request to plugins@snapcommute.com. The full version has server side integration for enrollment and authentication as well as full customization options available through Zoom SDK. Audit images can also be extracted from the full version plugin.
+This plugin provides easy access to the Zoom login SDK from a Cordova app using the Android or iOS platform. The plugin provided by FaceTec, vendors of Zoom login SDK, was updated till the SDK version 6.0.5. The vendor stopped updating the plugin for newer SDK versions. The plugin provided by the vendor does not work with the latest SDK versions and hence required modifictions. This is an evaluation version for the latest Zoom login SDK, created by SnapCommute Labs Pvt. Ltd. This version only contains local liveness check and few customizations. For full version of the plugin please send an email request to plugins@snapcommute.com. The full version has server side integration for enrollment and authentication as well as full customization options available through Zoom SDK. Audit images can also be extracted from the full version plugin.
 
 Installation
 ---------------
@@ -18,7 +11,11 @@ If you don't have a Cordova project or don't know how to run one, please see the
 
 Since the Zoom SDK files are large, it is not included in the github. Please visit [ZoomLogin Developer Website](https://dev.zoomlogin.com) and download the sdk files and copy the relevant file to the root folder of this plugin.
 
-For Android, there will be a .aar file inside the downloaded zip file (like zoom-authentication-hybrid-<version #>.aar), which has to be copied to the root folder. For iOS, there will be a folder named ZoomAuthenticationHybrid.framework inside ZoomAuthentication-ios-<version #> folder, within the zip file, which has to be copied to the root folder.
+For Android, there will be a .aar file inside the downloaded zip file (like zoom-authentication-hybrid-<version #>.aar), which has to be copied to the root folder. For iOS, there will be a folder named ZoomAuthentication.framework inside ZoomAuthentication-ios-<version #> folder, within the zip file, which has to be zipped and copied to the root folder.
+
+Modification to the hooks file within the hooks folder might be required if the android .aar file is of a different version.
+
+Below are details of different functions available in the plugin. Some of them are not enabled in the evaluation version and are included only for demo purpose.
 
 Initializing the SDK
 --------------------
@@ -97,37 +94,52 @@ SDK Status Check
 Enrollment Status Check
 ---------------------
 ```javascript
-    var userId = "A user id";
-  
-    function onAuthComplete(result) {
-        if (result.successful) {
-            alert('Success!');
-        }
-        else {
-            alert(result.status);
-        }
-    }
 
-    ZoomAuthEval.getEnrollmentStatus(userId,onAuthComplete, onError);
+    ZoomAuthEval.getUserEnrollmentStatus(userId,onSuccess, onError);
 
 ```
 
-User Id Check
+User Enrollment Check
 ---------------------
 ```javascript
-   var userId = "A user id";
-  
-    function onAuthComplete(result) {
-        if (result.successful) {
-            alert('Success!');
-        }
-        else {
-            alert(result.status);
-        }
-    }
 
-    ZoomAuthEval.isUserEnrolled(userId,onAuthComplete, onError);
+    ZoomAuthEval.isUserEnrolled(userId,onSuccess, onError);
 ```
+
+Id Check
+---------------------
+```javascript
+  
+    ZoomAuthEval.idCheck(onSuccess, onError);
+```
+
+Delete Enrollment 
+---------------------
+```javascript
+
+    ZoomAuthEval.deleteEnrollment(userId,onSuccess, onError);
+```
+
+Audit Trail
+---------------------
+```javascript
+
+    ZoomAuthEval.isUserEnrolled(onSuccess, onError);
+```
+
+Set up UI Theme
+---------------------
+```javascript
+
+    ZoomAuthEval.setDefaultTheme(onSuccess, onError);
+    
+    ZoomAuthEval.setDarkTheme(onSuccess, onError);
+        
+    ZoomAuthEval.setMidnightTheme(onSuccess, onError);
+            
+    ZoomAuthEval.setSunsetTheme(onSuccess, onError);
+```
+
 
 Setting up your plubic key
 -------------------------------
@@ -151,17 +163,17 @@ In case you are using your own zoom server instance, instead of using the FaceTe
 
 Customizing brand logo
 -------------------------
-In case you want to change the default logo provided in the screens shown by zoom, you can use the below function to do the same.
+In case you want to enable a custom logo in the screens shown by zoom, you can use the below function to do the same. Replace the custom_zoom_logo.png with your own image (with the same name) in the root folder of the plugin.
 
 ```javascript
 
-    ZoomAuthEval.setBrandingLogo(brandingLogo, onSuccess, onFailure);
+    ZoomAuthEval.setBrandingLogo(enable, onSuccess, onFailure);
 
 ```
 
 Customizing colors
 -------------------------
-In case you want to change the colors in the screens shown by zoom, you can use the below function to do the same.
+In case you want to change the colors in the screens shown by zoom, you can use the below function to do the same. Pass color in Hex color format.
 
 ```javascript
 
@@ -182,3 +194,4 @@ In case you want to change the default text provided in the main screen shown by
     </config-file> 
 
 ```
+
