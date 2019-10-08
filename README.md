@@ -9,11 +9,18 @@ From an existing Cordova project, run `cordova plugin add https://github.com/plu
 
 If you don't have a Cordova project or don't know how to run one, please see the [Cordova](https://cordova.apache.org/#getstarted) documentation.
 
+File Copy and Modifications:
+-
 Since the Zoom SDK files are large, it is not included in the github. Please visit [ZoomLogin Developer Website](https://dev.zoomlogin.com) and download the sdk files and copy the relevant file to the root folder of this plugin.
 
 For Android, there will be a .aar file inside the downloaded zip file (like zoom-authentication-hybrid-<version #>.aar), which has to be copied to the root folder. For iOS, there will be a folder named ZoomAuthentication.framework inside ZoomAuthentication-ios-<version #> folder, within the zip file, which has to be zipped and copied to the root folder.
 
 Modification to the hooks file within the hooks folder might be required if the android .aar file is of a different version.
+
+Image files also needs to copied for the latest SDK to work properly. For Android copy the drawable-nodpi folder available in the sample app provided along with the android sdk download. For iOS copy the Assets.xcassets folder available in the sample app provided along with the iOS sdk download. Ensure you delete confilicting images like app icon etc.
+
+Functions available in plugin:
+-
 
 Below are details of different functions available in the plugin. Some of them are not enabled in the evaluation version and are included only for demo purpose.
 
