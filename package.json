@@ -15,5 +15,9 @@
     "cordova-ios"
   ],
   "author": "SnapCommute Labs Pvt. Ltd.",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+      "extract-zip": "1.6.6"
+  }
 }
+
