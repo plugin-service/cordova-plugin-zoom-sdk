@@ -43,4 +43,5 @@
         <resource-file src="./Assets.xcassets" />
         <resource-file src="./Zoom.strings" />
     </platform>
+    
 </plugin>
