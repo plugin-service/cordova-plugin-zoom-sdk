@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
-import { SettingComponent } from './setting.component';
+import { AuditTrailComponent } from './audit-trail.component';
 import { IonicModule } from '@ionic/angular';
 import {CommonModule} from '@angular/common';
 
 @NgModule({
-    declarations: [SettingComponent],
+    declarations: [AuditTrailComponent],
     imports: [IonicModule,CommonModule],
-    exports: [SettingComponent]
+    exports: [AuditTrailComponent]
 })
 
-export class ComponentsModule {}
+export class ComponentsModule2 {}

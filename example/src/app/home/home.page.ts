@@ -1,6 +1,7 @@
 import { Component, NgZone } from '@angular/core';
-import { Platform,PopoverController } from '@ionic/angular';
+import { Platform,PopoverController,LoadingController } from '@ionic/angular';
 import { SettingComponent } from '../setting/setting.component';
+import {AuditTrailComponent} from '../audit-trail/audit-trail.component'
 var ZoomAuthEval: any;
 
 @Component({
@@ -10,10 +11,12 @@ var ZoomAuthEval: any;
 })
 export class HomePage {
   logMessage = "";
-  userId = ""
-  constructor(private ngZone: NgZone, private platform: Platform,private popoverController:PopoverController) {
+  userId = "";
+  loaderToShow: any;
+  constructor(private ngZone: NgZone, private platform: Platform,
+    private popoverController:PopoverController,public loadingController: LoadingController) {
     this.platform.ready().then(() => {
-      var lickey = 'Enter your Zoom SDK license key here';
+      var lickey = 'Paste your license key here';
       console.log(window);
       ZoomAuthEval = window['ZoomAuthEval']
       ZoomAuthEval.initialize(lickey, (success) => {
@@ -188,15 +191,19 @@ export class HomePage {
     })
   }
 
-  auditTrail(){
+  auditTrail(ev: any){
+    //this.showLoader();
     ZoomAuthEval.auditTrail((success) => {
       this.logMessage="";
       this.addLogMessage("auditTrail - success")
-      this.addLogMessage(JSON.stringify(success))
+      //this.addLogMessage(JSON.stringify(success));
+      console.log(success);
+      this.auditTrailPopover(ev,success);
     }, (error) => {
       this.logMessage="";
       this.addLogMessage("auditTrail - error")
-      this.addLogMessage(JSON.stringify(error))
+      this.addLogMessage(JSON.stringify(error));
+      //this.hideLoader();
     })
   }
 
@@ -274,4 +281,27 @@ export class HomePage {
 
     return await popover.present();
   }
+
+  async auditTrailPopover(ev,imageJson) {
+    const popover = await this.popoverController.create({
+      component: AuditTrailComponent,
+      event: ev,
+      componentProps:imageJson
+    });
+    //this.hideLoader();
+    return await popover.present();
+
+  }
+
+  /*showLoader() {
+    this.loaderToShow = this.loadingController.create({
+      message: 'Loading....'
+    }).then((res) => {
+      res.present();
+    });
+  }
+
+  hideLoader() {
+      this.loadingController.dismiss();
+  }*/
 }
