@@ -1,7 +1,8 @@
 
 ZoOm SDK Cordova Plugin
 -----------------------
-This plugin provides easy access to the Zoom login SDK from a Cordova app using the Android or iOS platform. The plugin provided by FaceTec, vendors of Zoom login SDK, was updated till the SDK version 6.0.5. The vendor stopped updating the plugin for newer SDK versions. The plugin provided by the vendor does not work with the latest SDK versions and hence required modifictions. This is an evaluation version for the latest Zoom login SDK, created by SnapCommute Labs Pvt. Ltd. This version only contains local liveness check and few customizations. For full version of the plugin please send an email request to plugins@snapcommute.com. The full version has server side integration for enrollment and authentication as well as full customization options available through Zoom SDK. Audit images can also be extracted from the full version plugin.
+
+This plugin provides easy access to the ZoOm SDK from a Cordova app using the Android or iOS platform. The plugin provided by FaceTec, creators of the ZoOm SDK, no longer support their Cordova plugin starting at ZoOm 6.5.0.  This plugin modifies that plugin to get it to work with the latest version of the Zoom SDK.  This plugin is created by SnapCommute Labs Pvt. Ltd.  This plugin contains limited functionality.  For full version of the plugin please send an email request to plugins@snapcommute.com. The full version has functionalities for enrollment and authentication as well as full customization options available through ZoOm SDK.
 
 Installation
 ---------------
@@ -131,7 +132,7 @@ Audit Trail
 ---------------------
 ```javascript
 
-    ZoomAuthEval.isUserEnrolled(onSuccess, onError);
+    ZoomAuthEval.auditTrail(onSuccess, onError);
 ```
 
 Set up UI Theme
