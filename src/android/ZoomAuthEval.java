@@ -15,13 +15,28 @@ import android.os.Build;
 import java.util.Locale;
 //import java.util.ArrayList;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.List;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 enum ZoomServerRequestType {
         Enroll,
@@ -328,7 +343,21 @@ private void deleteEnrollment(JSONArray args, final CallbackContext callbackCont
 }
 
 private void auditTrail(JSONArray args, final CallbackContext callbackContext) throws JSONException {
-        callbackContext.success("This option available only in full version. Please contact plugins@snapcommute.com for further details");
+        JSONObject auditTrailString=new JSONObject();
+        if(auditTrailImages.size()>0) {
+                for(int i = 0; i < auditTrailImages.size(); i++) {
+                        try{
+                                auditTrailString.put(String.valueOf(i),this.processPicture(auditTrailImages.get(i),0));
+                        } catch (Exception e) {
+                                auditTrailString.put(String.valueOf(i),"Error compressing image.");
+                        }
+
+                };
+                callbackContext.success(auditTrailString);
+        }else{
+                callbackContext.error("No audit trail available");
+        }
+        //callbackContext.success("This option available only in full version. Please contact plugins@snapcommute.com for further details");
 }
 
 private void setDefaultTheme(JSONArray args, final CallbackContext callbackContext) throws JSONException {
@@ -347,11 +376,37 @@ private void setSunsetTheme(JSONArray args, final CallbackContext callbackContex
         callbackContext.success("This option available only in full version. Please contact plugins@snapcommute.com for further details");
 }
 
+public String processPicture(Bitmap bitmap, int encodingType) {
+        ByteArrayOutputStream jpeg_data = new ByteArrayOutputStream();
+        CompressFormat compressFormat = encodingType == 0 ?
+                                        CompressFormat.JPEG :
+                                        CompressFormat.PNG;
+        String returnValue="";
+        try {
+                if (bitmap.compress(compressFormat, 50, jpeg_data)) {
+                        byte[] code = jpeg_data.toByteArray();
+                        byte[] output = Base64.encode(code, Base64.NO_WRAP);
+                        String js_out = new String(output);
+                        returnValue= js_out;
+                        //js_out = null;
+                        //output = null;
+                        //code = null;
+                }
+        } catch (Exception e) {
+                returnValue = "Error compressing image.";
+        }
+        jpeg_data = null;
+        return returnValue;
+}
+
 }
 
 class ZoomManagedSessionFaceMapProcessor implements ZoomFaceMapProcessor {
 // Keep track of the identifier of the FaceMap during Enrollment, Authentication, and Identity Check scenarios.
 private String enrollmentIdentifier;
+
+// Keep track of last ZoomFaceMapResultCallback so that developers can control the ZoOm UX after asynchronous API calls.
+private ZoomFaceMapResultCallback zoomFaceMapResultCallback;
 
 // Keep track of the ZoomManagedSession so that state can be updated as processing progresses.
 // Developer Note: Developer can do state tracking via other mechanisms if desired.
@@ -389,43 +444,200 @@ ZoomManagedSessionFaceMapProcessor(ZoomManagedSession zoomManagedSession, String
  */
 public void processZoomSessionResultWhileZoomWaits(ZoomSessionResult zoomSessionResult, final ZoomFaceMapResultCallback zoomFaceMapResultCallback) {
         zoomManagedSession.setLatestZoomSessionResult(zoomSessionResult);
-        if(zoomSessionResult.getStatus() != ZoomSessionStatus.SESSION_COMPLETED_SUCCESSFULLY) {
-                if(zoomSessionResult.getStatus() == ZoomSessionStatus.LANDSCAPE_MODE_NOT_ALLOWED || zoomSessionResult.getStatus() == ZoomSessionStatus.REVERSE_PORTRAIT_NOT_ALLOWED) {
-                        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.PORTRAIT_MODE_REQUIRED;
-                }
-                else if(zoomSessionResult.getStatus() == ZoomSessionStatus.CONTEXT_SWITCH) {
-                        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.CONTEXT_SWITCH;
-                }
-                else if(zoomSessionResult.getStatus() == ZoomSessionStatus.CAMERA_INITIALIZATION_ISSUE || zoomSessionResult.getStatus() == ZoomSessionStatus.CAMERA_PERMISSION_DENIED) {
-                        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.CAMERA_ERROR;
-                }
-                else if(zoomSessionResult.getStatus() == ZoomSessionStatus.TIMEOUT) {
-                        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.TIMEOUT;
-                }
-                else if(zoomSessionResult.getStatus() == ZoomSessionStatus.USER_CANCELLED || zoomSessionResult.getStatus() == ZoomSessionStatus.USER_CANCELLED_VIA_HARDWARE_BUTTON) {
-                        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.USER_CANCELED;
-                }
+        this.zoomFaceMapResultCallback = zoomFaceMapResultCallback;
 
+        if(zoomSessionResult.getStatus() != ZoomSessionStatus.SESSION_COMPLETED_SUCCESSFULLY) {
+                setUnsuccessSubCode(zoomSessionResult);
                 zoomFaceMapResultCallback.cancel();
+                this.zoomFaceMapResultCallback = null;
                 return;
         }
 
+        // Here we set the latest status subcode to Timeout because if this class forgets to call one of the ZoomFaceMapResultCallback functions
+        // then as a safety net for users in the wild we implement a catch-all timeout that will cancel the session.
+        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.TIMEOUT;
+
+        // Check the mode and call the appropriate helper function to handle the specific scenario that the application invoked.
+        if(zoomManagedSession.getMode() == ZoomManagedSession.ZoomManagedSessionMode.LIVENESS) {
+                processLiveness(zoomSessionResult);
+        }
+
+
+}
+/*
+ * Process the Liveness Check
+ *
+ * This method of calling the FaceTec Managed API, as well as the string of helper functions and evaluation of the result
+ * are fairly prescriptive.  The developer will most likely be completely changing these functions to conform the API calls
+ * around the particulars of the developers own webservice/infrastructure/security practices.
+ */
+private void processLiveness(ZoomSessionResult zoomSessionResult) {
+        // Call helper function that calls FaceTec Managed API (or ZoOm Server REST SDK) /liveness endpoint
+        // Developer Note: For your production app, you will be calling your own webservice and NOT the FaceTec Managed API or ZoOm Server REST SDK directly.
+        callFaceTecManagedAPIForLiveness(zoomSessionResult, new FaceTecManagedAPICallback() {
+                        @Override
+                        public void onResponse(JSONObject responseJSON) {
+                                processLivenessResponseAndGoToNextStep(responseJSON);
+                        }
+                });
+}
+/*
+ * Handles calling the FaceTec Managed API (or ZoOm Server REST SDK) for Liveness Check.
+ * Specific pieces handled:
+ * 1.  Vanilla HTTPS request to API to process Liveness Check.
+ * 2.  Setting License Key and Headers that are required by FaceTec Managed API
+ * 3.  Detecting basic network failure and cancelling out if detected
+ * 4.  Updating the progress bar via the ZoomFaceMapResultCallback.onProgress function
+ * 5.  Gather the needed data in correct format -- i.e. the FaceMap, Session ID
+ * 6.  Hand back response JSON to caller.
+ */
+private void callFaceTecManagedAPIForLiveness(ZoomSessionResult zoomSessionResult, final FaceTecManagedAPICallback callback)  {
         String zoomFaceMapBase64 = zoomSessionResult.getFaceMetrics().getFaceMapBase64();
 
-        // This generally will not happen, but we still want to check here just in case we get an
-        // internal error.
+        // This generally will not happen, but we still want to check here just in case we get an internal error.
         if(zoomFaceMapBase64.isEmpty()) {
                 zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.INTERNAL_UNSUCCESS;
                 zoomFaceMapResultCallback.cancel();
                 return;
         }
 
-        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.COMPLETED_SUCCESSFULLY;
-        zoomFaceMapResultCallback.succeed();
-        String endPoint = "";
-        JSONObject parameters = new JSONObject();
+        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.TIMEOUT;
 
+        JSONObject parameters = new JSONObject();
+        try {
+                parameters.put("faceMap", zoomFaceMapBase64);
+                parameters.put("sessionId", zoomSessionResult.getSessionId());
+        }
+        catch(JSONException e) {
+                e.printStackTrace();
+                Log.d("ZoomSDK", "Error setting up JSON for Liveness Check.");
+                zoomFaceMapResultCallback.cancel();
+        }
+
+        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), parameters.toString());
+        ProgressRequestBody progressRequestBody = new ProgressRequestBody(requestBody,
+                                                                          new ProgressRequestBody.Listener() {
+                        @Override
+                        public void onUploadProgressChanged(long bytesWritten, long totalBytes) {
+                                final float uploadProgressPercent = ((float)bytesWritten) / ((float)totalBytes);
+                                zoomFaceMapResultCallback.uploadProgress(uploadProgressPercent);
+                        }
+                });
+
+        // Do the network call and handle result
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                                  .header("Content-Type", "application/json")
+                                  .header("X-Device-License-Key", zoomManagedSession.deviceLicenseKeyIdentifier)
+                                  .header("User-Agent", ZoomSDK.createZoomAPIUserAgentString(zoomSessionResult.getSessionId()))
+                                  .url(zoomManagedSession.zoomServerBaseURL + "/liveness")
+                                  .post(progressRequestBody)
+                                  .build();
+
+        zoomManagedSession.latestFaceTecAPIResponseString = "";
+
+        ZoomManagedSession.getApiClient().newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                                e.printStackTrace();
+                                Log.d("ZoomSDK", "Error during HTTPS call.");
+                                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.NETWORK_ERROR;
+                                zoomFaceMapResultCallback.cancel();
+                        }
+
+                        @Override
+                        public void onResponse(Call call, okhttp3.Response response) throws IOException {
+                                String responseString = response.body().string();
+                                response.body().close();
+                                try {
+                                        JSONObject responseJSON = new JSONObject(responseString);
+                                        callback.onResponse(responseJSON);
+                                }
+                                catch(JSONException e) {
+                                        e.printStackTrace();
+                                        Log.d("ZoomSDK", "Error while parsing JSON result.");
+                                        zoomFaceMapResultCallback.cancel();
+                                }
+                        }
+                });
 }
+
+/*
+ * Evaluate a response from /liveness.
+ * Check for Liveness Success, then check for Liveness Unsuccess (retry needed), else inform the caller that we should cancel.
+ */
+private void processLivenessResponseAndGoToNextStep(JSONObject responseJSON) {
+        // Dynamically set the success message.
+        // In the developer application, this may not be needed if the developer wishes to show a generic success message in all modes
+        // or if the developer only uses ZoOm in one mode.
+        ZoomCustomization.overrideResultScreenSuccessMessage = "Liveness Confirmed!";
+
+        try {
+                if(responseJSON.has("data") && responseJSON.getJSONObject("data").getInt("livenessStatus") == 0) {
+                        zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.COMPLETED_SUCCESSFULLY;
+                        zoomFaceMapResultCallback.succeed();
+                }
+                else if (responseJSON.has("data") && responseJSON.getJSONObject("data").getInt("livenessStatus") == 1) {
+                        zoomFaceMapResultCallback.retry();
+                }
+                else {
+                        zoomFaceMapResultCallback.cancel();
+                }
+                this.zoomFaceMapResultCallback = null;
+        }
+        catch(JSONException e) {
+                e.printStackTrace();
+                Log.d("ZoomSDK", "Error while parsing JSON result.");
+                zoomFaceMapResultCallback.cancel();
+                this.zoomFaceMapResultCallback = null;
+        }
+}
+
+/*
+ * Helper function to parse ZoomSessionResult and set more generic/friendly subcodes for consumers of ZoOm Managed Sessions.
+ * Developers are encouraged to implement their own logic, logging, analytics here if desired.
+ */
+private void setUnsuccessSubCode(ZoomSessionResult zoomSessionResult)  {
+        if(zoomSessionResult.getStatus() == ZoomSessionStatus.UNKNOWN_INTERNAL_ERROR) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.INTERNAL_UNSUCCESS;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.TIMEOUT) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.TIMEOUT;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.NON_PRODUCTION_MODE_LICENSE_INVALID) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.NETWORK_ERROR;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.LOCKED_OUT) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.LOCKED_OUT;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.MISSING_GUIDANCE_IMAGES) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.MISSING_GUIDANCE_IMAGES;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.CONTEXT_SWITCH) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.CONTEXT_SWITCH;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.CAMERA_INITIALIZATION_ISSUE || zoomSessionResult.getStatus() == ZoomSessionStatus.CAMERA_PERMISSION_DENIED) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.CAMERA_ERROR;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.LANDSCAPE_MODE_NOT_ALLOWED || zoomSessionResult.getStatus() == ZoomSessionStatus.REVERSE_PORTRAIT_NOT_ALLOWED) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.PORTRAIT_MODE_REQUIRED;
+        }
+        else if(zoomSessionResult.getStatus() == ZoomSessionStatus.USER_CANCELLED || zoomSessionResult.getStatus() == ZoomSessionStatus.USER_CANCELLED_VIA_HARDWARE_BUTTON) {
+                zoomManagedSession.latestZoomManagedSessionStatusSubCode = ZoomManagedSession.ZoomManagedSessionStatusSubCode.USER_CANCELED;
+        }
+        else {
+                Log.d("ZoomSDK", "Unexpected value found: " + zoomSessionResult.getStatus().toString());
+        }
+}
+
+/*
+ * Defines the callback that will be called to return the response from server calls.
+ */
+abstract class FaceTecManagedAPICallback {
+public abstract void onResponse(JSONObject responseJSON);
+}
+
+
+
 }
 
 class ZoomManagedSession {
@@ -454,6 +666,21 @@ String latestFaceTecAPIResponseString;
 // Used to call back to ZoomManagedSession caller with the overall result.
 private ZoomManagedSession.ZoomManagedSessionCallback zoomManagedSessionCallback;
 
+private static OkHttpClient _apiClient = null;
+
+// DEVELOPER NOTE: Certain older devices with Android API 16-API 20 support TLS 1.1 by default and will not be able to communicate with the FaceTec
+// Managed API. This is a specific behavior to the FaceTec Managed API. Developers most likely have their own code for communicating with their own APIs,
+// and thus this code will most likely be overridden by new code here.
+static OkHttpClient createApiClient() {
+        return new OkHttpClient();
+}
+
+static synchronized OkHttpClient getApiClient() {
+        if (_apiClient == null) {
+                _apiClient = createApiClient();
+        }
+        return _apiClient;
+}
 /*
  * Check parameters, store local references, and kick off the ZoomSession!
  */
@@ -553,6 +780,7 @@ public enum ZoomManagedSessionStatusSubCode {
         USER_CANCELED("Session cancelled by the user."),
         TIMEOUT("Session cancelled due to timeout."),
         NETWORK_ERROR("Network connectivity issue encountered."),
+        MISSING_GUIDANCE_IMAGES("Guidance images were not provided."),
         COMPLETED_SUCCESSFULLY("The Managed Session processed successfully."),
         CHECK_LATEST_FACETEC_API_RESPONSE_STRING("FaceTec API returned an unsuccess result. Check the latestFaceTecAPIString for details.");
 
@@ -629,5 +857,70 @@ public abstract void onResult(EnrollmentStatus status);
  */
 static public abstract class DeleteUserCallback {
 public abstract void onResult(boolean isDeleted);
+}
+}
+
+/*
+ * Implementation of RequestBody that allows upload progress to be retrieved
+ */
+class ProgressRequestBody extends RequestBody {
+private final RequestBody requestBody;
+private Listener listener;
+
+ProgressRequestBody(RequestBody requestBody, Listener listener) {
+        this.requestBody = requestBody;
+        this.listener = listener;
+}
+
+@Override
+public MediaType contentType() {
+        return requestBody.contentType();
+}
+
+@Override
+public long contentLength() throws IOException {
+        return requestBody.contentLength();
+}
+
+@Override
+public void writeTo(BufferedSink sink) throws IOException {
+        ProgressStream progressStream = new ProgressStream(sink.outputStream(), contentLength());
+        BufferedSink progressSink = Okio.buffer(Okio.sink(progressStream));
+        requestBody.writeTo(progressSink);
+        progressSink.flush();
+}
+
+protected final class ProgressStream extends OutputStream {
+private final OutputStream stream;
+private long totalBytes;
+private long bytesSent;
+
+ProgressStream(OutputStream stream, long totalBytes) {
+        this.stream = stream;
+        this.totalBytes = totalBytes;
+}
+
+@Override
+public void write(@NonNull byte[] b, int off, int len) throws IOException {
+        this.stream.write(b, off, len);
+        if(len < b.length) {
+                this.bytesSent += len;
+        }
+        else {
+                this.bytesSent += b.length;
+        }
+        listener.onUploadProgressChanged(this.bytesSent, this.totalBytes);
+}
+
+@Override
+public void write(int b) throws IOException {
+        this.stream.write(b);
+        this.bytesSent += 1;
+        listener.onUploadProgressChanged(this.bytesSent, this.totalBytes);
+}
+}
+
+public interface Listener {
+void onUploadProgressChanged(long bytesWritten, long totalBytes);
 }
 }
