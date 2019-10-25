@@ -74,7 +74,7 @@
   //Output is true or false
 
   exports.setPublicKey = function(publicKey, success, error) {
-    exec(success, error, "ZoomAuthentication", "setPublicKey", [publicKey]);
+    exec(success, error, "ZoomAuthEval", "setPublicKey", [publicKey]);
   }
   //Above function is for setting the public key to be used by the SDK.
   //For development mode public key need not be setup
