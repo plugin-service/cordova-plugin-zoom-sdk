@@ -4,6 +4,12 @@ ZoOm SDK Cordova Plugin
 
 This plugin provides easy access to the ZoOm SDK from a Cordova app using the Android or iOS platform. The plugin provided by FaceTec, creators of the ZoOm SDK, no longer support their Cordova plugin starting at ZoOm 6.5.0.  This plugin modifies that plugin to get it to work with the latest version of the Zoom SDK.  This plugin is created by SnapCommute Labs Pvt. Ltd.  This plugin contains limited functionality.  For full version of the plugin please send an email request to plugins@snapcommute.com. The full version has functionalities for enrollment and authentication as well as full customization options available through ZoOm SDK. We have added ID Scan images option as well in the full version.
 
+**Latest Update**
+-----------------
+**Upgraded plugin for SDK versions 8.4.1 (both Android and iOS) is available. Email your request to plugins@snapcommute.com in case you are interested to explore**
+
+**We will be starting to build Flutter plugin as well soon. Let us know if your are interested**
+
 Installation
 ---------------
 From an existing Cordova project, run `cordova plugin add https://github.com/plugin-service/cordova-plugin-zoom-sdk`
