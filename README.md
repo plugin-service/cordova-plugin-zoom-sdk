@@ -6,9 +6,9 @@ This plugin provides easy access to the ZoOm SDK from a Cordova app using the An
 
 **Latest Update**
 -----------------
-**Upgraded plugin for SDK versions 8.4.1 (both Android and iOS) is available. Email your request to plugins@snapcommute.com in case you are interested to explore**
+**Upgraded plugin for SDK versions 8.12.0 (both Android and iOS) is available. The full version of the plugin has already been integrated and implemented by companies in Costa Rica and Australia. Email your request to plugins@snapcommute.com in case you are interested to explore**
 
-**We will be starting to build Flutter plugin as well soon. Let us know if your are interested**
+**We will be starting to build Flutter plugin as well soon. If you are interested please email to plugins@snapcommute.com**
 
 Installation
 ---------------
